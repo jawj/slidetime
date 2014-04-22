@@ -1,5 +1,4 @@
 
-
 printStdout = (text) -> postMessage type: 'stdout', data: text
 printStderr = (text) -> postMessage type: 'stderr', data: text
 
@@ -22,7 +21,7 @@ files = []
     files.push newFile
 
   else if type is 'command'
-    importScripts 'ffmpeg-custom.js'
+    importScripts 'ffmpeg-custom.js' unless this.ffmpeg_run  # import on first command
 
     opts =
       arguments: event.data.arguments
