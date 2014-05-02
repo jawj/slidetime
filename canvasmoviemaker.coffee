@@ -3,17 +3,20 @@ class CanvasMovieMaker
 
   constructor: (@canvas, @context) ->
     @listeners = {}
-    @frameCount = 0
-
-    imageHeaderStr = "P7\nWIDTH #{@canvas.width}\nHEIGHT #{@canvas.height}\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n"
-    @imageHeader = new Uint8Array imageHeaderStr.length
-    @imageHeader[i] = imageHeaderStr.charCodeAt(i) for i in [0...imageHeaderStr.length]
 
     @worker = new Worker 'canvasmovieworker.js'
     @worker.addEventListener 'message', (event) =>  
       # type (data): stdin (str), stdout (str), frame (frame #), done (Uint8Array), error (?)
       message = event.data
       @trigger message.type, message.data
+
+  setSource: (@canvas, @context) ->
+    @reset()
+    @frameCount = 0
+
+    imageHeaderStr = "P7\nWIDTH #{@canvas.width}\nHEIGHT #{@canvas.height}\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n"
+    @imageHeader = new Uint8Array imageHeaderStr.length
+    @imageHeader[i] = imageHeaderStr.charCodeAt(i) for i in [0...imageHeaderStr.length]
 
   addEventListener: (eventName, callbackFunc) -> 
     @listeners[eventName] ?= []
@@ -49,3 +52,8 @@ class CanvasMovieMaker
       memory: memory
       transferBack: transferBack
     @
+
+  reset: ->
+    @worker.postMessage type: 'reset'
+    @
+

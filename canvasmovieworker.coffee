@@ -11,12 +11,20 @@ stderrCallback = (chr) ->
     printStderr stdErrStr.trimRight()
     stdErrStr = ''
 
-files = []
+files = null  # scope
+
+reset = ->
+  files = []
+
+reset()
 
 @onmessage = (event) ->
   type = event.data.type
 
-  if type is 'file'
+  if type is 'reset'
+    reset()
+
+  else if type is 'file'
     newFile = name: event.data.name, data: new Uint8Array event.data.data
     files.push newFile
 
@@ -34,5 +42,3 @@ files = []
     result = ffmpeg_run opts
     movieBuffer = result?[0]?.data
     postMessage type: 'done', data: movieBuffer, if movieBuffer and event.data.transferBack then [movieBuffer]
-
-    self.close()
