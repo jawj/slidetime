@@ -41,4 +41,7 @@ reset()
     postMessage type: 'starting', data: opts.arguments
     result = ffmpeg_run opts
     movieBuffer = result?[0]?.data
-    postMessage type: 'done', data: movieBuffer, if movieBuffer and event.data.transferBack then [movieBuffer]
+    try
+      postMessage type: 'done', data: movieBuffer, if movieBuffer and event.data.transferBack then [movieBuffer]
+    catch  # for IE
+      postMessage type: 'done', data: movieBuffer

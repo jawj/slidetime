@@ -39,7 +39,10 @@ class CanvasMovieMaker
     @
 
   addFile: (fileName, fileBuffer, transfer = yes) ->
-    @worker.postMessage {type: 'file', name: fileName, data: fileBuffer}, if transfer then [fileBuffer]
+    try
+      @worker.postMessage {type: 'file', name: fileName, data: fileBuffer}, if transfer then [fileBuffer]
+    catch e  # for IE
+      @worker.postMessage {type: 'file', name: fileName, data: fileBuffer}
     @
 
   encode: (inArgs, otherArgs, memory = 536870912, transferBack = yes) ->  

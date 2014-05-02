@@ -52,7 +52,7 @@ class TimerMaker
       bg: '#ffff00'
       fg: '#000000'
 
-  encSettings: @::encSettingsOptions.mp4
+  encSettings: @::encSettingsOptions.mpeg1
   sound: @::soundOptions.ding
 
   # --- end defaults ---
