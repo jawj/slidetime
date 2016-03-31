@@ -3,7 +3,7 @@
 <head>
 <style>
 	.fc-chooser, .fontsize { border: 1px solid #ddd; padding: 5pt 10pt; outline: none; }
-	.fc-container { position: absolute; display: none; overflow-y: scroll; border: 1px solid #ddd; border-bottom: none; box-shadow: 1px 1px 2px #aaa; }
+	.fc-container { position: absolute; display: none; overflow-y: scroll; border: 1px solid #ddd; border-bottom: none; box-shadow: 1px 1px 2px #aaa; background: #fff; }
 	.fc-row { padding: 5pt 10pt; border-bottom: 1px solid #ddd; overflow-x: hidden; cursor: default; }
 	.fc-highlighted { color: #fff; background: #46d; }
 	.fc-title { font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif; font-size: 10pt; }
@@ -15,5 +15,11 @@
   <script src="canvasmoviemaker.js"></script>
   <script src="getfonts.js"></script>
   <script src="slidetime.js"></script>
+
+  <p><input type="checkbox" name="bold"> Bold &nbsp; <input type="checkbox" name="italic"> Italic</p>
+  <p>Minutes <input type="text" name="duration" size="3" value="1"> Seconds <input type="text" name="duration" size="3" value="0"></p>
+  <p id="completed"></p>
+  <div id="sampleCanvasParent"></div>
+  
 </body>
 </html>

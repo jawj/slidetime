@@ -1,4 +1,6 @@
 
+importScripts 'ffmpeg-20160330.js'  # + '?' + Math.random()
+
 printStdout = (text) -> postMessage type: 'stdout', data: text
 printStderr = (text) -> postMessage type: 'stderr', data: text
 
@@ -28,20 +30,17 @@ reset()
     newFile = name: event.data.name, data: new Uint8Array event.data.data
     files.push newFile
 
-  else if type is 'command'
-    importScripts 'ffmpeg-custom.js' unless this.ffmpeg_run  # import on first command
-
+  else if type is 'command' 
     opts =
       arguments: event.data.arguments
-      TOTAL_MEMORY: event.data.memory  # 512MB is probably around the safe limit for Chrome
+      memory: event.data.memory  # 512MB is probably around the safe limit for Chrome
       files: files
       print: printStdout
       stderr: stderrCallback
 
     postMessage type: 'starting', data: opts.arguments
-    result = ffmpeg_run opts
-    movieBuffer = result?[0]?.data
-    try
-      postMessage type: 'done', data: movieBuffer, if movieBuffer and event.data.transferBack then [movieBuffer]
-    catch  # for IE
-      postMessage type: 'done', data: movieBuffer
+    ffmpeg_run opts, (movieBuffer) ->
+      try
+        postMessage type: 'done', data: movieBuffer, if movieBuffer and event.data.transferBack then [movieBuffer]
+      catch  # for IE
+        postMessage type: 'done', data: movieBuffer

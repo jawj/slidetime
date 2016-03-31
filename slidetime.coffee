@@ -34,7 +34,7 @@ class TimerMaker
       
   # --- begin defaults ---
 
-  timerSeconds: 60
+  timerSeconds: 30
   warnSeconds:  10
 
   fontSize:     60
@@ -43,16 +43,16 @@ class TimerMaker
 
   colors:
     main:
-      bg: '#0080ff'
-      fg: '#ffffff'
-    warn:
-      bg: '#0080ff'
-      fg: '#ffff00'
-    last:
-      bg: '#ffff00'
       fg: '#000000'
+      bg: '#ffffff'
+    warn:
+      fg: '#000000'
+      bg: '#ffff00'
+    last:
+      fg: '#ffff00'
+      bg: '#000000'
 
-  encSettings: @::encSettingsOptions.mpeg1
+  encSettings: @::encSettingsOptions.mp4
   sound: @::soundOptions.ding
 
   # --- end defaults ---
@@ -88,8 +88,10 @@ class TimerMaker
     @padding = @textHeight * 0.12
 
     canvasWidth = @textHeight + textWidth + @padding * 4
-    canvasWidth += 4 - (canvasWidth % 4) if canvasWidth % 4 > 0  # round width up to a multiple of 4
+    canvasWidth += 16 - (canvasWidth % 16) if canvasWidth % 16 > 0  # round width up to a multiple of 16
+    
     canvasHeight = @textHeight + @padding * 2
+    canvasHeight += 16 - (canvasHeight % 16) if canvasHeight % 16 > 0  # round height up to a multiple of 16 too
 
     if @canvas
       @canvas.width  = canvasWidth
@@ -164,7 +166,6 @@ class TimerMaker
       -r #{@encSettings.framerate} #{@encSettings.codecs} "
 
     @mm.encode '-r 1', ffargs
-
     @
 
   start: ->
@@ -180,14 +181,22 @@ class TimerMaker
 
     @mm.on 'starting', (args) -> console.log "starting with arguments: #{args.join ' '}"
     @mm.on 'stderr', (data) -> console.log data
-    @mm.on 'frame', (frame) => console.log "completed: #{Math.floor(frame / (@mm.frameCount * @encSettings.framerate) * 100)}%"
+    @mm.on 'frame', (frame) => 
+      (get id: 'completed').innerHTML = "#{Math.floor(frame / (@mm.frameCount * @encSettings.framerate) * 100)}% completed" 
     @mm.on 'done', (buffer) =>
       @mm.reset()  # free frame memory
       return unless buffer?
-      videoBlob = new Blob [buffer]
-      videoURL = URL.createObjectURL videoBlob
-      link = make tag: 'a', download: "slidetime.#{@encSettings.ext}", text: 'Download', href: videoURL, parent: (get tag: 'body')
-  
+      
+      filename = "slidetime.#{@encSettings.ext}"
+      # Safari's createObjectURL is still completely broken in 9.1
+      videoURL = if navigator.vendor is 'Apple Computer, Inc.' then 'data:video/mp4;base64,' + b64 new Uint8Array buffer  
+      else URL.createObjectURL new Blob [buffer]
+
+      link = make tag: 'a', download: filename, text: 'Download', href: videoURL, parent: (get tag: 'body'), onclick: ->
+        if navigator.msSaveOrOpenBlob?
+          navigator.msSaveOrOpenBlob (new Blob [buffer]), filename
+          return no
+
 
 body = (get tag: 'body')
 sampleText = '16:03'
@@ -195,21 +204,35 @@ sampleText = '16:03'
 fontChooser = FontChooser sampleText, 250, [], (font) ->
   for sample in (get cls: 'fc-sample', inside: fontSizeChooser.dropdown) 
     sample.style.fontFamily = font
+    redrawPreview()
 
 body.appendChild fontChooser.input
 
-fontSizeChooser = FontSizeChooser sampleText
+fontSizeChooser = FontSizeChooser sampleText, null, null, (size) ->
+  redrawPreview()
+
 body.appendChild fontSizeChooser.input
 
 tm = new TimerMaker()
-tm.prepareCanvas()
-tm.drawClock(tm.timerSeconds)
-body.appendChild tm.canvas
+
+redrawPreview = ->
+  tm.fontFace = fontChooser.input.value
+  tm.fontSize = 0 + fontSizeChooser.input.value
+
+  tm.prepareCanvas()
+  tm.drawClock tm.timerSeconds
+
+  parent = get id: 'sampleCanvasParent'
+  oldCanvas = parent.lastChild
+  if oldCanvas? then parent.removeChild oldCanvas 
+  parent.appendChild tm.canvas
+
 
 make 
   tag: 'button'
   text: 'Render movie'
   parent: body
-  onclick: -> tm.start()
+  onclick: -> 
+    tm.start()
 
 

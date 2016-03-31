@@ -4,7 +4,7 @@ class CanvasMovieMaker
   constructor: (@canvas, @context) ->
     @listeners = {}
 
-    @worker = new Worker 'canvasmovieworker.js'
+    @worker = new Worker 'canvasmovieworker.js'  # + '?' + Math.random()
     @worker.addEventListener 'message', (event) =>  
       # type (data): stdin (str), stdout (str), frame (frame #), done (Uint8Array), error (?)
       message = event.data
@@ -45,7 +45,7 @@ class CanvasMovieMaker
       @worker.postMessage {type: 'file', name: fileName, data: fileBuffer}
     @
 
-  encode: (inArgs, otherArgs, memory = 536870912, transferBack = yes) ->  
+  encode: (inArgs, otherArgs, memory = 512 * 1024 * 1024, transferBack = yes) ->  
     # memory: 768MB is around max Chrome allows (and gives 'Aw, snap!' half the time)
     args = "-f image2 -c:v pam #{inArgs} -i frame_%d.pam #{otherArgs} -y output.bin"
     argsArr = args.match(/\S+/g)

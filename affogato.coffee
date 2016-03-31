@@ -1,3 +1,21 @@
+
+# naughtily optimised version that may append one or two trailing zero bytes
+
+b64 = (input, output = '') ->
+  chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='.split ''
+  len = input.length
+  i = 0
+  while i < len
+    chr1 = input[i++]
+    chr2 = input[i++]
+    chr3 = input[i++]
+    output += chars[chr1 >> 2]
+    output += chars[((chr1 & 3) << 4) | (chr2 >> 4)]
+    output += chars[((chr2 & 15) << 2) | (chr3 >> 6)]
+    output += chars[chr3 & 63]
+  output
+
+
 # concise interface to getElementById, getElementsByTagName, getElementsByClassName
 # opts: either id *or* tag and/or cls, [inside], [multi]
 # id is an id, tag is a tag name
