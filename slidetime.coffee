@@ -17,24 +17,33 @@ class TimerMaker
 
   encSettingsOptions:
     mpeg1:
-      codecs:     '-c:v mpeg1video -q:v 4 -c:a mp2 -b:a 64k -f mpeg'
-      framerate:  25
-      audiolag:   -1
-      ext:        'mpg'
+      videocodec:  '-c:v mpeg1video -q:v 4'
+      audiocodec:  '-c:a mp2 -b:a 64k'
+      format:      '-f mpeg'
+      inframerate: 1
+      framerate:   25
+      audiolag:    -1
+      ext:         'mpg'
     mp4:
-      codecs:     '-c:v mpeg4 -q:v 1 -c:a aac -strict -2 -q:a 6 -f mp4'  # q:v 1 - 31 =>  best - worst, q:a 0 - 9 => best - worst
-      framerate:  1
-      audiolag:   0
-      ext:        'mp4'
+      videocodec:  '-c:v mpeg4 -q:v 1'  # q:v 1 - 31 => best - worst
+      audiocodec:  '-c:a aac -q:a 6'    # q:a 0 - 9  => best - worst
+      format:      '-f mp4'
+      inframerate: 1
+      framerate:   1
+      audiolag:    0
+      ext:         'mp4'
     avi:
-      codecs:     '-c:v mpeg4 -q:v 1 -c:a aac -strict -2 -q:a 6 -f avi'  # q:v 1 - 31 =>  best - worst, q:a 0 - 9 => best - worst
-      framerate:  1
-      audiolag:   1
-      ext:        'avi'
+      videocodec:  '-c:v mpeg4 -q:v 1'  # q:v 1 - 31 => best - worst
+      audiocodec:  ' -c:a aac -q:a 6'   # q:a 0 - 9  => best - worst
+      format:      '-f avi'
+      inframerate: 1
+      framerate:   1
+      audiolag:    1
+      ext:         'avi'
       
   # --- begin defaults ---
 
-  timerSeconds: 30
+  timerSeconds: 10800
   warnSeconds:  10
 
   fontSize:     60
@@ -144,34 +153,28 @@ class TimerMaker
   makeMovie: (soundData) ->
     @prepareCanvas()
 
-    @mm.setSource @canvas, @ctx
-    @mm.addFile @sound.file, soundData.buffer if @sound
+    @mm.setSource @canvas, @ctx, @encSettings, soundData, @timerSeconds
+    # @mm.addFile @sound.file, soundData.buffer if @sound
 
-    for i in [@timerSeconds..0]
-      @drawClock i
-      @mm.addFrame()
+    i = @timerSeconds
+    iTarget = if @sound then -@sound.length else 0
 
-    @mm.addFrame() for j in [1..@sound.length] if @sound
+    callback = =>
+      if i >= iTarget
+        if i >= 0 then @drawClock i
+        i -= 1
+        @mm.addFrame callback
 
-    ffargs = ''
+      else
+        @mm.encode()
 
-    if @sound
-      ffargs += "
-        -f wav
-        -itsoffset #{@timerSeconds + @encSettings.audiolag}
-        -async 1
-        -i #{@sound.file} " 
-
-    ffargs += "
-      -r #{@encSettings.framerate} #{@encSettings.codecs} "
-
-    @mm.encode '-r 1', ffargs
+    callback()
     @
 
   start: ->
     if @sound
       xhr url: @sound.file, type: 'arraybuffer', success: (req) =>
-        soundData = new Uint8Array req.response
+        soundData = req.response
         @makeMovie soundData
     else
       @makeMovie()
@@ -181,10 +184,12 @@ class TimerMaker
 
     @mm.on 'starting', (args) -> console.log "starting with arguments: #{args.join ' '}"
     @mm.on 'stderr', (data) -> console.log data
-    @mm.on 'frame', (frame) => 
-      (get id: 'completed').innerHTML = "#{Math.floor(frame / (@mm.frameCount * @encSettings.framerate) * 100)}% completed" 
+    @mm.on 'frame', (frame) =>
+      completionMsg = "#{Math.floor(frame / (@mm.frameCount * @encSettings.framerate) * 100)}% completed" 
+      (get id: 'completed').innerHTML = completionMsg
+      console.log completionMsg
+    
     @mm.on 'done', (buffer) =>
-      @mm.reset()  # free frame memory
       return unless buffer?
       
       filename = "slidetime.#{@encSettings.ext}"

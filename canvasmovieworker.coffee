@@ -1,5 +1,5 @@
 
-importScripts 'ffmpeg-20160330.js'  # + '?' + Math.random()
+importScripts 'ffmpeg-20160403.js' + '?' + Math.random()
 
 printStdout = (text) -> postMessage type: 'stdout', data: text
 printStderr = (text) -> postMessage type: 'stderr', data: text
@@ -13,34 +13,18 @@ stderrCallback = (chr) ->
     printStderr stdErrStr.trimRight()
     stdErrStr = ''
 
-files = null  # scope
-
-reset = ->
-  files = []
-
-reset()
-
 @onmessage = (event) ->
-  type = event.data.type
+  opts =
+    arguments: event.data.arguments
+    memory: event.data.memory  # 512MB is probably around the safe limit for Chrome
+    files: event.data.files
+    print: printStdout
+    stderr: stderrCallback
 
-  if type is 'reset'
-    reset()
-
-  else if type is 'file'
-    newFile = name: event.data.name, data: new Uint8Array event.data.data
-    files.push newFile
-
-  else if type is 'command' 
-    opts =
-      arguments: event.data.arguments
-      memory: event.data.memory  # 512MB is probably around the safe limit for Chrome
-      files: files
-      print: printStdout
-      stderr: stderrCallback
-
-    postMessage type: 'starting', data: opts.arguments
-    ffmpeg_run opts, (movieBuffer) ->
-      try
-        postMessage type: 'done', data: movieBuffer, if movieBuffer and event.data.transferBack then [movieBuffer]
-      catch  # for IE
-        postMessage type: 'done', data: movieBuffer
+  postMessage type: 'starting', data: opts.arguments
+  ffmpeg_run opts, (result) ->
+    movieBuffer = result.buffer
+    try
+      postMessage type: event.data.returnType, data: movieBuffer, [movieBuffer]
+    catch  # for IE
+      postMessage type: event.data.returnType, data: movieBuffer

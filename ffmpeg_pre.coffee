@@ -7,7 +7,8 @@ this['ffmpeg_run'] = (opts, callback) ->
   Module['preRun'] = [->
     FS.init opts['stdin'], opts['stdout'], opts['stderr']
     while file = opts['files'].pop()
-      FS.writeFile file.name, file.data, encoding: 'binary'
+      fileData = new Uint8Array file['data']
+      FS.writeFile file['name'], fileData, encoding: 'binary'
     null
   ]
   Module['postRun'] = [->

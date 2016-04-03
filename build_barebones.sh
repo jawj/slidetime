@@ -8,7 +8,7 @@ mkdir dist
 
 make clean  # if run before
 
-DEBUG=0
+DEBUG=1
 
 if [ $DEBUG -eq 1 ]; then
   CONFOPTFLAGS='-O1'
@@ -24,7 +24,7 @@ emconfigure ./configure --cc="emcc" --prefix=./dist \
   --disable-w32threads --disable-network --disable-hwaccels --disable-parsers --disable-bsfs --disable-debug --disable-zlib \
   --disable-protocols --disable-indevs --disable-outdevs \
   --enable-protocol=file --enable-pic --enable-small \
-  --disable-demuxers --enable-demuxer='image2,wav' \
+  --disable-demuxers --enable-demuxer='image2,wav,concat,mpeg1system,mp4,mov,avi' \
   --disable-decoders --enable-decoder='pam,pcm_s16le' \
   --disable-encoders --enable-encoder='mpeg1video,h263,mp2,aac,mpeg4' \
   --disable-filters --enable-filter='adelay,apad,aperms,aresample,aselect,asendcmd,asetnsamples,format,perms,scale,select,sendcmd,amovie,movie,ffbuffersink,ffabuffersink,abuffer,buffer,abuffersink,buffersink,afifo,fifo' \
@@ -34,7 +34,7 @@ emmake make
 make install
 mv dist/bin/ffmpeg ffmpeg.bc
 
-emcc $EMCCOPTFLAGS ffmpeg.bc -o ../slidetime/ffmpeg-20160330.js --pre-js ../slidetime/ffmpeg_pre.js --post-js ../slidetime/ffmpeg_post.js
+emcc $EMCCOPTFLAGS ffmpeg.bc -o ../slidetime/ffmpeg-20160403.js --pre-js ../slidetime/ffmpeg_pre.js --post-js ../slidetime/ffmpeg_post.js
 
 exit
 
